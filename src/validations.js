@@ -4,7 +4,8 @@ const validations = new Map([
     ["andrew",[]],
     ["chelsea",["nick"]],
     ["nick",["chelsea"]],
-    ["alex",[]]
+    ["alex",["hudson"]],
+    ["hudson",["alex"]]
 ])
 
 module.exports = validations
