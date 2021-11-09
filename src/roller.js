@@ -3,11 +3,7 @@ const mailConstants = require("./mail/mailConstants")
 const mailer = require("./mail/mailer")
 const fs = require("fs")
 const ejs = require("ejs")
-
-
-
-// const names = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
-// const namesMaster = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
+const logger = require("./logger/logger")
 
 class Roller {
     constructor() {
@@ -26,24 +22,24 @@ class Roller {
     rollNames() {
         try {
             this.namesMaster.forEach((name, index) => {
-                console.log("****************************************")
-                console.log("Processing:", name)
-                console.log("****************************************")
+                logger.debug("****************************************")
+                logger.debug(`Processing: ${name}`)
+                logger.debug("****************************************")
                 let arrCopy = this.names.filter(val => val.toString() !== name)
-                console.log(`Starting pool for ${name}`)
-                console.log(arrCopy)
+                logger.debug(`Starting pool for ${name}`)
+                logger.debug(arrCopy)
                 let exceptions = validations.get(name)
                 exceptions.forEach((e, i) => {
                     if (arrCopy.indexOf(e) !== -1) {
-                        console.log(`found exception: ${e} at index ${arrCopy.indexOf(e)}`)
-                        console.log(`removing exception: ${arrCopy.splice(arrCopy.indexOf(e), 1)} from pool`)
+                        logger.debug(`found exception: ${e} at index ${arrCopy.indexOf(e)}`)
+                        logger.debug(`removing exception: ${arrCopy.splice(arrCopy.indexOf(e), 1)} from pool`)
                     } else {
-                        console.log("no exceptions left in pool")
+                        logger.debug("no exceptions left in pool")
                     }
                 })
 
-                console.log("final pool for", name)
-                console.log(arrCopy)
+                logger.debug(`final pool for ${name}`)
+                logger.debug(arrCopy)
                 let min = Math.ceil(0);
                 let max = Math.floor(arrCopy.length);
                 let roll = Math.floor(Math.random() * (max - min) + min)
@@ -53,22 +49,22 @@ class Roller {
                     e.message = `${name} has no eligible partners in pool: ${arrCopy}`
                     throw e;
                 }
-                console.log(`${name} rolled a ${roll}`); //The maximum is exclusive and the minimum is inclusive
-                console.log(`${name}'s KK is ${arrCopy[roll]}`)
+                logger.debug(`${name} rolled a ${roll}`); //The maximum is exclusive and the minimum is inclusive
+                logger.debug(`${name}'s KK is ${arrCopy[roll]}`)
                 //remove the persons name from the next set of rolls
                 //find index of persons name in name array
                 this.names.splice(this.names.findIndex(i => i === arrCopy[roll]), 1)
 
                 this.results.set(name, arrCopy[roll])
             })
-            //this.printResults()
+            this.printResults()
 
             let i=0
             const iterator = this.results.entries();
                 let interval = setInterval(()=>{
                     if(i<this.results.size) {
                         let pair = iterator.next().value
-                        this.mailResult(pair[0], pair[1])
+                        // this.mailResult(pair[0], pair[1])
                         i++
                     } else {
                         clearInterval(interval)
@@ -76,13 +72,17 @@ class Roller {
                 },2000)
 
         } catch (e) {
-            console.log(e.name)
-            console.log(e.message)
+            logger.error(e.name)
+            logger.error(e.message)
         }
     }
 
     printResults() {
-        console.log(this.results)
+        logger.result("the draw results are:")
+        this.results.forEach((value, key)=>{
+            logger.result(`${key} => ${value}`)
+        })
+        logger.result("************************")
     }
 
     mailResult(sender, receiver) {
@@ -98,9 +98,9 @@ class Roller {
             };
            return mailer.sendMail(mailOptions, (err,info)=>{
                if (err){
-                   console.log(err)
+                   logger.error(err)
                } else {
-                   console.log("message sent")
+                   logger.info("message sent")
                }
            })
     }
