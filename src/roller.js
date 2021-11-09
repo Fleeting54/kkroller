@@ -64,12 +64,12 @@ class Roller {
                 let interval = setInterval(()=>{
                     if(i<this.results.size) {
                         let pair = iterator.next().value
-                        // this.mailResult(pair[0], pair[1])
+                        this.mailResult(pair[0], pair[1])
                         i++
                     } else {
                         clearInterval(interval)
                     }
-                },2000)
+                },5000) //upped timer to avoid concurrent connections
 
         } catch (e) {
             logger.error(e.name)
