@@ -1,14 +1,18 @@
 const validations = require("./validations")
+const mailConstants = require("./mail/mailConstants")
+const mailer = require("./mail/mailer")
+
+
 const names = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
 const namesMaster = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
 
-class Roller{
-    constructor(){
+class Roller {
+    constructor() {
         this.results = new Map();
 
     }
 
-    rollNames(){
+    rollNames() {
         try {
             namesMaster.forEach((name, index) => {
                 console.log("****************************************")
@@ -47,17 +51,44 @@ class Roller{
                 this.results.set(name, arrCopy[roll])
             })
             this.printResults()
-        }
-        catch(e){
+
+            let i=0
+            const iterator = this.results.entries();
+            //this.results.forEach( (value, key)=>{
+                let interval = setInterval(()=>{
+                    if(i<this.results.size) {
+                        console.log(i++)
+                        let pair = iterator.next().value
+                        this.mailResult(pair[0],pair[1])
+                    } else {
+                        clearInterval(interval)
+                    }
+                },1000)
+           //})
+        } catch (e) {
             console.log(e.name)
             console.log(e.message)
         }
     }
 
-    printResults(){
+    printResults() {
         console.log(this.results)
     }
 
+    mailResult(sender, receiver) {
+            let mailOptions = {
+                from: mailConstants.sender,
+                to: mailConstants.mailMap.get(sender),
+                subject: 'Your KK is ...',
+                text: `hi ${sender}, \n Your 2021 KK partner is ${receiver}`
+            };
+            mailer.sendMail(mailOptions).then(info =>{
+                console.log("mail sent")
+                console.log(info)
+            }).catch(e =>{
+                console.log(e)
+            })
+    }
 }
 
 module.exports = Roller
