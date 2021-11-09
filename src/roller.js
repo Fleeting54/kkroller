@@ -1,24 +1,35 @@
 const validations = require("./validations")
 const mailConstants = require("./mail/mailConstants")
 const mailer = require("./mail/mailer")
+const fs = require("fs")
+const ejs = require("ejs")
 
 
-const names = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
-const namesMaster = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
+
+// const names = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
+// const namesMaster = ["kris", "allisha", "andrew", "chelsea", "nick", "alex", "hudson"]
 
 class Roller {
     constructor() {
+        this.names = []
+        validations.forEach((value, key)=>{
+            this.names.push(key)
+        })
+        this.namesMaster = []
+        validations.forEach((value, key)=>{
+            this.namesMaster.push(key)
+        })
         this.results = new Map();
 
     }
 
     rollNames() {
         try {
-            namesMaster.forEach((name, index) => {
+            this.namesMaster.forEach((name, index) => {
                 console.log("****************************************")
                 console.log("Processing:", name)
                 console.log("****************************************")
-                let arrCopy = names.filter(val => val.toString() !== name)
+                let arrCopy = this.names.filter(val => val.toString() !== name)
                 console.log(`Starting pool for ${name}`)
                 console.log(arrCopy)
                 let exceptions = validations.get(name)
@@ -46,25 +57,24 @@ class Roller {
                 console.log(`${name}'s KK is ${arrCopy[roll]}`)
                 //remove the persons name from the next set of rolls
                 //find index of persons name in name array
-                names.splice(names.findIndex(i => i === arrCopy[roll]), 1)
+                this.names.splice(this.names.findIndex(i => i === arrCopy[roll]), 1)
 
                 this.results.set(name, arrCopy[roll])
             })
-            this.printResults()
+            //this.printResults()
 
             let i=0
             const iterator = this.results.entries();
-            //this.results.forEach( (value, key)=>{
                 let interval = setInterval(()=>{
                     if(i<this.results.size) {
-                        console.log(i++)
                         let pair = iterator.next().value
-                        this.mailResult(pair[0],pair[1])
+                        this.mailResult(pair[0], pair[1])
+                        i++
                     } else {
                         clearInterval(interval)
                     }
-                },1000)
-           //})
+                },2000)
+
         } catch (e) {
             console.log(e.name)
             console.log(e.message)
@@ -76,18 +86,23 @@ class Roller {
     }
 
     mailResult(sender, receiver) {
+        const mailTemplate = fs.readFileSync("./src/mail/template.html").toString();
+        const mailVars = {name: sender[0].toUpperCase() + sender.slice(1), partner: receiver[0].toUpperCase() + receiver.slice(1)}
+        const html = ejs.render(mailTemplate,mailVars)
             let mailOptions = {
                 from: mailConstants.sender,
                 to: mailConstants.mailMap.get(sender),
                 subject: 'Your KK is ...',
+                html: html,
                 text: `hi ${sender}, \n Your 2021 KK partner is ${receiver}`
             };
-            mailer.sendMail(mailOptions).then(info =>{
-                console.log("mail sent")
-                console.log(info)
-            }).catch(e =>{
-                console.log(e)
-            })
+           return mailer.sendMail(mailOptions, (err,info)=>{
+               if (err){
+                   console.log(err)
+               } else {
+                   console.log("message sent")
+               }
+           })
     }
 }
 

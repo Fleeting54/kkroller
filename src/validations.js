@@ -2,7 +2,7 @@ const validations = new Map([
     ["kris",["allisha"]],
     ["allisha",["kris"]],
     ["andrew",[]],
-    ["chelsea",["nick"]],
+    ["chelsea",["nick", "kris"]],
     ["nick",["chelsea"]],
     ["alex",["hudson"]],
     ["hudson",["alex"]]
